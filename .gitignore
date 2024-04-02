@@ -1,0 +1,12 @@
+__pycache__
+data/*
+dqn
+test_video
+test_ws/test_result
+ttt.ipynb
+yolov5
+yolox/.git
+yolox/data/dataset
+yolox/exp
+yolox/output*
+yolox/weights
