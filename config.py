@@ -37,9 +37,9 @@ __C.TEST.BS = 1
 __C.DATA.NAME = 'TuSimpleLane'  # SelfLane/TuSimpleLane
 if __C.DATA.NAME == 'TuSimpleLane':
     __C.DATAROOT = r"/home/admin957/carla/DQLL/data/TUSimple"
-    __C.DATA.TRAIN_LIST = osp.join(__C.DATAROOT,'train_DRL_list.json')
-    __C.DATA.VAL_LIST = osp.join(__C.DATAROOT,'test_DRL_list.json')
-    __C.DATA.ROOT = osp.join(__C.DATAROOT,'MyTuSimpleLane')
+    __C.DATA.TRAIN_LIST = osp.join(__C.DATAROOT,'train_DRL_list_kaggle.json')
+    __C.DATA.VAL_LIST = osp.join(__C.DATAROOT,'test_DRL_list_old.json')
+    __C.DATA.ROOT = osp.join(__C.DATAROOT,'MyTuSimpleLane_old')
     # meanImagePath
     __C.DATA.MEAN_IMG_PATH = osp.join(__C.DATAROOT,r'meanImgTemp.npy')
 if __C.DATA.NAME == 'SelfLane':
@@ -49,20 +49,20 @@ if __C.DATA.NAME == 'SelfLane':
     __C.DATA.MEAN_IMG_PATH =r''#TODO:
 # buffer 的dataloader的设置
 __C.DATA.NUM_WORKS = 8
-__C.DATA.BS = 128
+__C.DATA.BS = 512
 __C.DATA.SHUFFLE = True
 # img dataloder的设置
-__C.DATA.TRAIN_IMGBS = 200  #  TODO:
+__C.DATA.TRAIN_IMGBS = 128  #  TODO:
 __C.DATA.VAL_IMGBS =1#  TODO:
 __C.DATA.IMGSHUFFLE = True
 
 
 # DQL*************************DQL
 # 最大步数
-__C.MAX_STEP = 8
+__C.MAX_STEP = 5
 # 距离阈值
-__C.DST_THR = 3
-__C.MOVE = 3
+__C.DST_THR = 5
+__C.MOVE = 5
 # action 数量 确定为4
 __C.ACT_NUM = 4
 # History数量
@@ -87,5 +87,5 @@ __C.SEED = 666
 __C.EXP.ROOT = 'dqn'
 now = time.strftime("%y-%m-%d-%H-%M", time.localtime())
 now = "-".join(now.split('-')[1:])
-__C.EXP.NAME = now+'_'+"100x100_lite2_aug_add_adpt_mx8_mv3"
+__C.EXP.NAME = now+'_'+"base_aug2"
 __C.EXP.PATH = os.path.join(__C.EXP.ROOT,__C.EXP.NAME)

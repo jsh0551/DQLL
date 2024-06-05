@@ -1,6 +1,8 @@
 __pycache__
 data/*
 dqn
+dqn_old
+reg
 test_video
 test_ws/test_result
 ttt.ipynb
@@ -10,3 +12,4 @@ yolox/data/dataset
 yolox/exp
 yolox/output*
 yolox/weights
+*.pth*

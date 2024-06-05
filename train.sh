@@ -1,2 +1,2 @@
 python train.py
-shutdown -h +1
+shutdown -h +5

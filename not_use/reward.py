@@ -27,10 +27,7 @@ def calMove(dst):
 
 def get_dst(gt_point, cur_point):
     dst = abs(gt_point-cur_point)
-    if dst <= dst_threshold:
-        return dst
-    adpt_dst = calMove(dst)
-    return adpt_dst
+    return dst
 
 
 def get_reward_trigger(cur_dst):
@@ -63,13 +60,15 @@ def getRewMov0427(cur_point, last_point, gt_point):
     else:  # should be moved, the action is 2 or 3
         cur_dst = get_dst(gt_point, cur_point)
         last_dst = get_dst(gt_point, last_point)
+        # bonus = (100-cur_dst)/100
+        bonus = 0
         if cur_dst < last_dst:
-            reward = reward_movement_action
+            reward = reward_movement_action + bonus
         else:
             if cur_point < 0 or cur_point >= 100:  # moved out of the image, the reward is change to -5
                 reward = reward_invalid_movement_action
             else:
-                reward = - reward_movement_action
+                reward = - reward_movement_action - bonus
     return reward
 
 

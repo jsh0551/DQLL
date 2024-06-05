@@ -24,6 +24,8 @@ import datasets
 import model
 import reward
 from utils_dqll import Timer
+MEAN = np.array([0.485, 0.456, 0.406])
+STD = np.array([0.229, 0.224, 0.225])
 
 def random_hsv_transform(img_array, h_range, s_range, v_range):
 
@@ -140,7 +142,7 @@ class trainer(object):
             imgs = imgs.numpy()
             gts = gts.numpy()
             for j in range(len(imgs)):
-                self.img = imgs[j]-self.meanImg
+                self.img = (imgs[j]/255. - MEAN) / STD
                 self.cl = clas[j]
                 self.gt = gts[j]
                 # transform
@@ -148,7 +150,7 @@ class trainer(object):
                     if random.random() > 0.5:
                         self.img = cv2.flip(self.img, 1)
                         self.cl = 1 - self.cl
-                        self.gt = [100-e for e in self.gt]
+                        self.gt = [100-e if e > -1 else -1 for e in self.gt]
                     if random.random() > 0.5:
                         random_values = np.random.randint(-20, 20, size=(3,))
                         self.img = np.clip(self.img + random_values, 0, 255).astype(np.uint8)

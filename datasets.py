@@ -13,9 +13,10 @@ import os.path as osp
 import json
 import numpy as np
 from PIL import Image
+from scipy.ndimage import rotate
+import cv2
 
-
-def getData(cfg):
+def getData(cfg,tf=None):
     if cfg.DATA.NAME =='SelfLane':
         trainset = SelfLane(cfg.DATA.TRAIN_LIST)
         valset = SelfLane(cfg.DATA.VAL_LIST)
@@ -31,36 +32,65 @@ def getData(cfg):
         meanImg = meanImg['meanImg']
         return meanImg,trainloader, valloader
     if cfg.DATA.NAME == 'TuSimpleLane':
-        trainset = TuSimpleLane(cfg.DATA.ROOT,cfg.DATA.TRAIN_LIST,isTrain=True)
-        valset =TuSimpleLane(cfg.DATA.ROOT,cfg.DATA.VAL_LIST,isTrain=False)
+        trainset = TuSimpleLane(cfg.DATA.ROOT,cfg.DATA.TRAIN_LIST,isTrain=True,cfg=cfg, tf=tf)
+        valset =TuSimpleLane(cfg.DATA.ROOT,cfg.DATA.VAL_LIST,isTrain=False, cfg=cfg)
         trainloader =DataLoader(trainset,batch_size=cfg.DATA.TRAIN_IMGBS,shuffle=cfg.DATA.IMGSHUFFLE,num_workers=cfg.DATA.NUM_WORKS)
         valloader =DataLoader(valset,batch_size=cfg.DATA.VAL_IMGBS,shuffle=cfg.DATA.IMGSHUFFLE,num_workers=cfg.DATA.NUM_WORKS)
         meanImg =np.load(cfg.DATA.MEAN_IMG_PATH)
         return meanImg,trainloader,valloader
 
 class TuSimpleLane(data.Dataset):
-    def __init__(self, dataroot, ListPath, isTrain=True,im_tf=None, gt_tf=None):
-        if isTrain:
+    def __init__(self, dataroot, ListPath, isTrain=True, cfg=None, tf=None):
+        self.cfg = cfg
+        self.isTrain = isTrain
+        if self.isTrain:
             self.root = osp.join(dataroot, 'train')
         else:
             self.root = osp.join(dataroot, 'test')
         self.root = osp.join(self.root, 'DRL', 'resize')
         with open(ListPath, 'r') as f:
             self.pathList= json.load(f)
-        self.im_tf = im_tf
-        self.gt_tf = gt_tf
-
+        self.tf = tf
+        self.initY = [11, 31, 51, 71, 91]
+        self.p = 0.5
     def __getitem__(self, index):
         # img
         temp = osp.join(self.root, self.pathList[index] + '.png')
         img = np.array(Image.open(temp))
+        img = img.astype(np.float32)
+        temp = osp.join(self.root, self.pathList[index] + '_mask.png')
+        mask = np.array(Image.open(temp))
+        mask = mask.astype(np.uint8)
         temp = osp.join(self.root, self.pathList[index] + '.json')
+        if (self.cfg.TRAIN.tf == True) and (self.isTrain == True):
+            tmp_p = np.random.uniform(0,1,2)
+            if self.p < tmp_p[0]:
+                angle = np.random.uniform(-15, 15)
+                img = rotate(img, angle, reshape=False, mode='reflect')
+                mask = rotate(mask, angle, reshape=False, mode='reflect')
+
+            if self.p < tmp_p[1]:
+                crops = np.random.randint(0,10,4)
+                x1,y1 = crops[:2]
+                x2,y2 = 100-crops[2:]
+                img = img[y1:y2, x1:x2]
+                mask = mask[y1:y2, x1:x2]
+                mask = mask.astype(np.uint8)
+                img = cv2.resize(img,(100,100))
+                mask = cv2.resize(mask,(100,100))
+        initX = []
+        for y in self.initY:
+            xx = mask[y, :]
+            xx = np.where(xx == 1)
+            if len(xx[0]) == 0:
+                x = -1
+            else:
+                x = int((np.max(xx)+np.min(xx))/2)
+            initX.append(x)
+        gt = np.array(initX)
         with open(temp, 'r') as f:
             data = json.load(f)
-        img = np.array(img)
-        img = img.astype(np.float32)
         cla = np.array(data['class'])
-        gt = np.array(data['gt'])
         return cla, img, gt
 
     def __len__(self):
