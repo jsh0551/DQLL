@@ -56,7 +56,7 @@ def get_json(json_data):
         tmp_dict['id'] = i
         tmp_dict['file_name'] = file_name
         tmp_dict['width'] = width
-        tmp_dict['height'] = height
+        tmp_dict['height'] = height//2
         images.append(tmp_dict)
         tmp_annotation, annot_id = get_annotations(bbox_path, i, annot_id)
         annotations.extend(tmp_annotation)
