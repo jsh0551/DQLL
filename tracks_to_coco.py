@@ -1,5 +1,8 @@
 import os
 import json
+import random
+import shutil
+from sklearn.model_selection import train_test_split
 from PIL import Image
 from tqdm import tqdm
 from tracks_mask_bbox import split_file_name, add_word_to_file_name
@@ -25,12 +28,21 @@ def get_annotations(bbox_path, image_id, id):
         id += 1
     return annotation, id
 
+def split_train_val(json_data, val_size=0.25):
+    train_data,train_list = dict(), []
+    val_data,val_list = dict(), []
+    train_list, val_list = train_test_split(json_data['items'], test_size=val_size, random_state=42, shuffle=True)
+
+    train_data['items'] = train_list
+    val_data['items'] = val_list
+    return train_data, val_data
+
 # id, width, height, file_name
 def get_json(json_data):
     images = []
     annotations = []
     annot_id = 0
-    pbar = tqdm(total=1)
+    pbar = tqdm(total=len(json_data['items']))
     for i,item in enumerate(json_data['items']):
         annot = item['annotations']
         pbar.update(1)
@@ -52,17 +64,38 @@ def get_json(json_data):
     coco_json = dict()
     coco_json['images'] = images
     coco_json['annotations'] = annotations
-    coco_json['categories'] = [{"id":0, "name":"line", "supercategory":"Line"}] # maybe need change
+    coco_json['categories'] = [{"id":0, "name":"line"}] # maybe need change
     return coco_json
+
+
 
 if __name__ == "__main__":
     os.makedirs(os.path.join(DATA_PATH, "coco/annotations"), exist_ok=True)
-    os.makedirs(os.path.join(DATA_PATH, "coco/images"), exist_ok=True)
+    os.makedirs(os.path.join(DATA_PATH, "coco/images/train"), exist_ok=True)
+    os.makedirs(os.path.join(DATA_PATH, "coco/images/val"), exist_ok=True)
 
     json_path = f'{DATA_PATH}/data.json'
     with open(json_path, 'r') as f:
         json_data = json.load(f)
-    all_coco_json = get_json(json_data)
+    train_data, val_data = split_train_val(json_data)
 
-    with open(f'{DATA_PATH}/coco/annotations/all.json', 'w') as f:
-        json.dump(all_coco_json, f, indent=2)
+    # convert to coco
+    train_coco_json = get_json(train_data)
+    val_coco_json = get_json(val_data)
+
+    for images in train_coco_json['images']:
+        file_name = images['file_name']
+        src_file_path = os.path.join(DATA_PATH, 'half_images',file_name)
+        dst_file_path = os.path.join(DATA_PATH, 'coco/images', 'train', file_name)
+        shutil.copy(src_file_path, dst_file_path)
+
+    for images in val_coco_json['images']:
+        file_name = images['file_name']
+        src_file_path = os.path.join(DATA_PATH, 'half_images',file_name)
+        dst_file_path = os.path.join(DATA_PATH, 'coco/images', 'val', file_name)
+        shutil.copy(src_file_path, dst_file_path)
+
+    with open(f'{DATA_PATH}/coco/annotations/train.json', 'w') as f:
+        json.dump(train_coco_json, f, indent=2)
+    with open(f'{DATA_PATH}/coco/annotations/val.json', 'w') as f:
+        json.dump(val_coco_json, f, indent=2)

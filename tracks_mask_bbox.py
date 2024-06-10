@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 DATA_PATH = 'data/merged_data'
 json_path = os.path.join(DATA_PATH, 'data.json')
+half_image_path = os.path.join(DATA_PATH, 'half_images')
 mask_path = os.path.join(DATA_PATH, 'mask')
 mask_color_path = os.path.join(DATA_PATH, 'mask_color')
 line_path = os.path.join(DATA_PATH, 'line')
@@ -58,6 +59,7 @@ def save_line(file_name, contours, cropped_imgs):
     return con_names
 
 if __name__ == '__main__':
+    os.makedirs(half_image_path, exist_ok=True)
     os.makedirs(mask_path, exist_ok=True)
     os.makedirs(mask_color_path, exist_ok=True)
     os.makedirs(line_path, exist_ok=True)
@@ -89,9 +91,10 @@ if __name__ == '__main__':
         mask_color[mask_img[:, :, 1] == 255] = 255
         bboxes, contours, cropped_imgs = get_bbox(img, mask_color)
         # half
-        mask[:h//2,:] = 0
-        mask_color[:h//2,:] = 0
-        half_bboxes, half_contours, half_cropped_imgs = get_bbox(img, mask_color)
+        half_img = img[h//2:,:,:]
+        mask = mask[h//2:,:]
+        mask_color = mask_color[h//2:,:]
+        half_bboxes, half_contours, half_cropped_imgs = get_bbox(half_img, mask_color)
         contours += half_contours
         cropped_imgs += half_cropped_imgs
         if bboxes:
@@ -99,6 +102,7 @@ if __name__ == '__main__':
             with open(os.path.join(bbox_path, f'{only_name}.json'), 'w') as f:
                 json.dump(bbox_info, f)
             con_names = save_line(file_name, contours, cropped_imgs)
+            cv2.imwrite(os.path.join(half_image_path,file_name), half_img)
             cv2.imwrite(os.path.join(mask_path,file_name), mask)
             cv2.imwrite(os.path.join(mask_color_path,file_name), mask_color)
         pbar.update(1)
