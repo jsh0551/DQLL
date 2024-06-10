@@ -22,8 +22,8 @@ def get_annotations(bbox_path, image_id, id):
         x,y,w,h = bbox
         coco_bbox = [x, y, w, h]
         tmp_dict['bbox'] = coco_bbox
-        tmp_dict['is_crowd'] = 0
-        tmp_dict['area'] = 0
+        tmp_dict['iscrowd'] = 0
+        tmp_dict['area'] = w*h
         annotation.append(tmp_dict)
         id += 1
     return annotation, id
