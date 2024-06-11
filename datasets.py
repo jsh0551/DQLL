@@ -47,10 +47,12 @@ class TuSimpleLane(data.Dataset):
             self.root = osp.join(dataroot, 'train')
         else:
             self.root = osp.join(dataroot, 'test')
+        # DRL root
         self.root = osp.join(self.root, 'DRL', 'resize')
         with open(ListPath, 'r') as f:
             self.pathList= json.load(f)
         self.tf = tf
+        # set points
         self.initY = [11, 31, 51, 71, 91]
         self.p = 0.5
     def __getitem__(self, index):
@@ -62,6 +64,7 @@ class TuSimpleLane(data.Dataset):
         mask = np.array(Image.open(temp))
         mask = mask.astype(np.uint8)
         temp = osp.join(self.root, self.pathList[index] + '.json')
+        # transform
         if (self.cfg.TRAIN.tf == True) and (self.isTrain == True):
             tmp_p = np.random.uniform(0,1,2)
             if self.p < tmp_p[0]:
@@ -69,15 +72,15 @@ class TuSimpleLane(data.Dataset):
                 img = rotate(img, angle, reshape=False, mode='reflect')
                 mask = rotate(mask, angle, reshape=False, mode='reflect')
 
-            if self.p < tmp_p[1]:
-                crops = np.random.randint(0,10,4)
-                x1,y1 = crops[:2]
-                x2,y2 = 100-crops[2:]
-                img = img[y1:y2, x1:x2]
-                mask = mask[y1:y2, x1:x2]
-                mask = mask.astype(np.uint8)
-                img = cv2.resize(img,(100,100))
-                mask = cv2.resize(mask,(100,100))
+            # if self.p < tmp_p[1]:
+            #     crops = np.random.randint(0,10,4)
+            #     x1,y1 = crops[:2]
+            #     x2,y2 = 100-crops[2:]
+            #     img = img[y1:y2, x1:x2]
+            #     mask = mask[y1:y2, x1:x2]
+            #     mask = mask.astype(np.uint8)
+            #     img = cv2.resize(img,(100,100))
+            #     mask = cv2.resize(mask,(100,100))
         initX = []
         for y in self.initY:
             xx = mask[y, :]
