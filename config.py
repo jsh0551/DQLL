@@ -19,7 +19,7 @@ __C.TEST =edict()
 # train*************************train
 __C.TRAIN.LR = 1e-4
 __C.TRAIN.WEIGHT_DECAY = 5e-4
-__C.TRAIN.MAX_EPOCH = 50
+__C.TRAIN.MAX_EPOCH = 150
 # 每个buffer 训练的epoch数量
 __C.TRAIN.INER_EPOCH = 10
 # GPU 设置
@@ -29,17 +29,17 @@ if __C.TRAIN.USE_GPU:
 # 断点续训
 __C.TRAIN.RESUME = False
 __C.TRAIN.RESUME_PATH = '20-04-18-10-30_TuSimpleLane/EP_9_HitRat0.60316.pth'
-__C.TRAIN.tf = True # transform
+__C.TRAIN.tf = False # TODO transform
 # test
 __C.TEST.BS = 1
 
 # data*************************data
 __C.DATA.NAME = 'TuSimpleLane'  # SelfLane/TuSimpleLane
 if __C.DATA.NAME == 'TuSimpleLane':
-    __C.DATAROOT = r"/home/admin957/carla/DQLL/data/TUSimple"
-    __C.DATA.TRAIN_LIST = osp.join(__C.DATAROOT,'train_DRL_list_kaggle.json')
-    __C.DATA.VAL_LIST = osp.join(__C.DATAROOT,'test_DRL_list_old.json')
-    __C.DATA.ROOT = osp.join(__C.DATAROOT,'MyTuSimpleLane_old')
+    __C.DATAROOT = r"/home/admin957/carla/DQLL/data/merged_data"
+    __C.DATA.TRAIN_LIST = osp.join(__C.DATAROOT,'train_all_list.json')
+    __C.DATA.VAL_LIST = osp.join(__C.DATAROOT,'val_all_list.json')
+    __C.DATA.ROOT = osp.join(__C.DATAROOT)
     # meanImagePath
     __C.DATA.MEAN_IMG_PATH = osp.join(__C.DATAROOT,r'meanImgTemp.npy')
 if __C.DATA.NAME == 'SelfLane':
