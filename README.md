@@ -1,162 +1,64 @@
 # DQLL
 ---
-This repo is the official implementation of [**Deep Reinforcement Learning Based Lane Detection and Localization**](https://www.sciencedirect.com/science/article/abs/pii/S0925231220310833)  
+![dqll drawio (2)](https://github.com/user-attachments/assets/198bbd4f-5ea0-4830-bcc9-fedafbb993ba)
+![제목 없는 동영상 (3)](https://github.com/user-attachments/assets/cd16a325-b99e-488b-84e1-0b74f459da81) 
 
-## Getting Started
-```$CODEROOT```: the path where you put this code.  
-```$DATAROOT```: the path where you put the dataset.  
+운동장 트랙 라인을 탐지하는 모델입니다.
+
+**Deep Reinforcement Learning Based Lane Detection and Localization (DQLL)** 라는 논문의 [공개 코드](https://github.com/tuzixini/DQLL)를 참고하여 작성하였습니다.
+
+트랙 라인을 탐지하여 바운딩 박스를 구하고 각 바운딩 박스의 landmark를 구하여 트랙 라인의 정확한 위치를 찾습니다.
+
+localization 과정에 강화학습 모델을 사용하는 기존 DQLL과 달리, 회귀 모델을 사용하여 실제 테스트 단계에서도 잘 동작하도록 하였습니다.
 
 ## Preparation
-- Prerequisites
-  - Python 3.x
-  - Pytorch 1.x: http://pytorch.org .
-  <!-- - other libs in ```requirements.txt```, run ```pip install -r requirements.txt```. -->
+### prerequisites
+- [requirements.txt](https://github.com/zhangming8/yolox-pytorch/blob/main/requirements.txt)
 
-- Installation
-  - Clone this repo:
-    ```
-    git clone https://github.com/tuzixini/DQLL.git  
-    ```
-  - Make sure your code dir ```$CODEROOT``` is in this folder tree:
-    ```
-    --$CODEROOT  
-      --DQLL  
-        |-- config.py  
-        |-- dataset.py  
-        |-- genMyData.py   
-        |-- ...  
-    ```
----
-## Data Preparation
-### TuSimple Dataset
-- Download Processed dataset from [tusimple-benchmark](https://github.com/TuSimple/tusimple-benchmark/issues/3)(**Pay Attention:** what we need is the data from"LANE DETECTION CHALLENGE", like following zips.)  
-    ```
-    dataset  
-    - train_set.zip  
-    - test_set.zip  
-    - test_baseline.json  
-    ground truth  
-    - test_label.json  
-    ```
+### Model
+- object detection model : [yolox](https://github.com/zhangming8/yolox-pytorch)
 
-- Unzip all zips into ```$DATAROOT``` dir.  
-  Make sure it has following folder tree:  
+- localization model : mobilenetV3(default), ghostnet, efficientNetV2
+
+### Dataset format
+- object detection
+  - COCO Dataset format
+- localization
+  - [MyTuSimpleLane format](https://github.com/tuzixini/DQLL?tab=readme-ov-file#tusimple-dataset) : TuSimple dataset 다운로드 후 genMyData.py 실행. 
   ```
   -- $DATAROOT
-      |-- test_set
-      |  -- clips
-      |  -- test_tasks_0627.json
-      |  -- readme.md
-      |-- train_set
-      |  -- clips
-      |  -- label_data_0313.json
-      |  -- label_data_0531.json
-      |  -- label_data_0601.json
-      |  -- readme.md
-      |-- test_label.json
+    |-- test_set
+    |  -- clips
+    |  -- test_tasks_0627.json
+    |  -- readme.md
+    |-- train_set
+    |  -- clips
+    |  -- label_data_0313.json
+    |  -- label_data_0531.json
+    |  -- label_data_0601.json
+    |  -- readme.md
+    |-- MyTuSimpleLane
+    |  -- test
+    |    -- bbox
+    |      -- XXXXfiles
+    |    -- DRL
+    |    -- img
+    |    -- mask
+    |    -- mask_color
+    |  -- train
+    |    -- bbox
+    |    -- DRL
+    |    -- img
+    |    -- mask
+    |    -- mask_color
+    |-- test_label.json
+    |-- failList.json
+    |-- meanImgTemp.npy
+    |-- train_img_list.json
+    |-- train_DRL_list.json
+    |-- test_img_list.json
+    |-- test_DRL_list.json
   ```
 
-- Use ```genMyData.py``` and ```genMeanImg.py``` to generate new data.  
-  1. Modify variable ```DATAROOT``` (file ```getMyData.py```, line 210) to real ```$DATAPATH``` you use (here is r"/opt/disk/zzy/dataset/TuSimple").  
-        ```python
-        DATAROOT = r"/opt/disk/zzy/dataset/TuSimple"
-        ```
-  2. Go to ```$CODEPATH``` and run ```genMyData.py```, and wait if finish.  
-        ```shell
-        cd $CODEPATH
-        python genMyData.py
-        ```
-   3. Modify variable ```DATAROOT``` (file ```genMeanImg.py```, line 22) to real ```$DATAPATH``` you use (here is r"/opt/disk/zzy/dataset/TuSimple").  
-        ```python
-        DATAROOT = r"/opt/disk/zzy/dataset/TuSimple"
-        ```
-
-  4. Go to ```$CODEPATH``` and run ```genMeanImg.py```, and wait if finish.  
-        ```shell
-        cd $CODEPATH
-        python genMeanImg.py
-        ```
-
-  5. Check. After all above operations, the folder tree of ```$DATAPATH``` should become like this:  
-        ```
-        -- $DATAROOT
-            |-- test_set
-            |  -- clips
-            |  -- test_tasks_0627.json
-            |  -- readme.md
-            |-- train_set
-            |  -- clips
-            |  -- label_data_0313.json
-            |  -- label_data_0531.json
-            |  -- label_data_0601.json
-            |  -- readme.md
-            |-- MyTuSimpleLane
-            |  -- test
-            |    -- bbox
-            |      -- XXXXfiles
-            |    -- DRL
-            |    -- img
-            |    -- mask
-            |    -- mask_color
-            |  -- train
-            |    -- bbox
-            |    -- DRL
-            |    -- img
-            |    -- mask
-            |    -- mask_color
-            |-- test_label.json
-            |-- failList.json
-            |-- meanImgTemp.npy
-            |-- train_img_list.json
-            |-- train_DRL_list.json
-            |-- test_img_list.json
-            |-- test_DRL_list.json
-        ```
-
----
-## Train the model
-### Modify the ```config.py```
-- Modify variable ```__C.DATAROOT``` (file ```config.py```, line 39) to real ```$DATAPATH``` you use (here is r"/opt/disk/zzy/dataset/TuSimple").  
-    ```python
-    __C.DATAROOT = r'/opt/disk/zzy/datasets/TuSimpleLane'
-    ```
-- Modify GPU settings according to your devices(```config.py```,line 26, 27, 28):  
-    ```python
-    __C.TRAIN.USE_GPU = True
-    if __C.TRAIN.USE_GPU:
-        __C.TRAIN.GPU_ID = [2, 3]
-    ```
-- For other parameter setting, please it on file ```config.py```.  
-### Train the model:  
-- Go to ```$CODEPATH``` and train.  
-    ```shell
-    cd $CODEPATH
-    python train.py
-    ```
----
-## Val/Test and Visualization  
-- Modify variable ```cfg.TRAIN.RESUME_PATH``` (file ```visAllVal.py```, line 335) to real model check point path you use (here is r'/opt/disk/zzy/project/DRL_lane/DRL_Code_TuSimple/DRL_Lane_Pytorch/exp/20-04-19-23-36_TuSimpleLane/EP_62_HitRat0.86465.pth').  
-    ```python
-    cfg.TRAIN.RESUME_PATH = '/opt/disk/zzy/project/DRL_lane/DRL_Code_TuSimple/DRL_Lane_Pytorch/exp/20-04-19-23-36_TuSimpleLane/EP_62_HitRat0.86465.pth'
-    ```
-- Go to ```$CODEPATH``` and run ```visAllVal.py```.  
-    ```shell
-    cd $CODEPATH
-    python visAllVal.py
-    ```
-- All visualization will be save in folder ```cfg.EXP.PATH/_VAL_VIS```
----
-# Citation
-If you find this project is useful for your research, please cite:  
-```
-@article{zhao2020deep,
-  title={Deep reinforcement learning based lane detection and localization},
-  author={Zhao, Zhiyuan and Wang, Qi and Li, Xuelong},
-  journal={Neurocomputing},
-  volume={413},
-  number={6},
-  pages={328-338},
-  doi={10.1016/j.neucom.2020.06.094},
-  year={2020}
-}
-```
+## Reference
+[Deep Reinforcement Learning Based Lane Detection and Localization](https://www.sciencedirect.com/science/article/abs/pii/S0925231220310833)
